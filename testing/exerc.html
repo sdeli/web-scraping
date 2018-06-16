@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<script>
+    var pagiBtnsObj = {
+        li : '.sr_pagination_item',
+        allsSel : '.sr_pagination_item a',
+        activesSel : `.current`
+    };
+
+    var x = call();
+    console.log(x);
+
+    function call(){
+        var allPagiBtns = document.querySelectorAll(pagiBtnsObj.allsSel);
+        console.log('allPagiBtns:');
+        console.log(allPagiBtns);
+        console.log('pagiBtnsObj:');
+        console.log(pagiBtnsObj);
+        pagiBtnsObj.lastItem = allPagiBtns[allPagiBtns.length - 1];
+
+        for (var [i, btn] of allPagiBtns.entries()) {
+            console.log(allPagiBtns.legth);
+            if  (i === allPagiBtns.legth - 1) return false;
+
+            if (btn.innerText === currPagiBtnInnerText) {
+                console.log(`${pagiBtnsObj.li}:nth-child(${i + 2} a`);
+                return `${pagiBtnsObj.li}:nth-child(${i + 2} a`;
+            }
+        }
+    }
+</script>
+</body>
+</html>

@@ -113,5 +113,19 @@ async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagi
 
 createScrapingLogic();
 
+async function extractHotelCards(hotelsCardsObj){
+    let cardsSel = hotelsCardsObj.mainDivsSel;
+    let hotelCards = document.querySelectorAll(cardsSel);
+    let namesSel = hotelsCardsObj.namesSel;
+    let uniqueSel = hotelsCardsObj.uniqueSel;
+    let profPagesLinkSel = hotelsCardsObj.profPagesLinkSel;
+    let currLink = window.location.href;
 
-
+    for (let [i, card] of hotelCards.entries()) {
+        let thisHotelsId = card.getAttribute(uniqueSel);
+        let hotelName = document.querySelector(`[${uniqueSel}=\'${thisHotelsId}\'] ${namesSel}`).innerText;
+        let profPagesLink = document.querySelector(`[${uniqueSel}=\'${thisHotelsId}\'] ${profPagesLinkSel}`).getAttribute('href');
+        profPagesLink = 'https://www.booking.com' + profPagesLink;
+        //var address = await extractProfPage();
+    }
+}

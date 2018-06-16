@@ -45,7 +45,31 @@ async function clickBtn(page, btnSelector) {
     console.log('clicked');
 }
 
+async function getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj) {
+    var nextPagiBtnObj = await page.evaluate(function(currPagiBtnInnerText, pagiBtnsObj){
+        var allPagiBtns = document.querySelectorAll(pagiBtnsObj.allsSel);
+
+        for (var i = 0; i < allPagiBtns.length; i++) {
+            console.log('for i: ' + i + '--------------------------');
+            if  (i === allPagiBtns.length - 1) return false;
+
+            if (allPagiBtns[i].innerText === currPagiBtnInnerText) {
+                let retObj = {
+                    nextHref : allPagiBtns[i].href,
+                    innerText : allPagiBtns[i + 1].innerText
+                }
+                console.log('retObj:');
+                console.log(retObj);
+                return retObj;
+            }
+        }
+    }, currPagiBtnInnerText, pagiBtnsObj);
+
+    return nextPagiBtnObj;
+}
+
 module.exports.enterText = enterText;
 module.exports.changeInnerText = changeInnerText;
 module.exports.changeInputsValue = changeInputsValue;
 module.exports.clickBtn = clickBtn;
+module.exports.getNextPageBtnObj = getNextPageBtnObj;

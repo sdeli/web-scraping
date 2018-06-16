@@ -73,3 +73,67 @@ module.exports.changeInnerText = changeInnerText;
 module.exports.changeInputsValue = changeInputsValue;
 module.exports.clickBtn = clickBtn;
 module.exports.getNextPageBtnObj = getNextPageBtnObj;
+
+/*
+async function extractHotelCards(page, hotelsCardsObj){
+
+    let allHotelsInfos = {};
+    let allHotelCardsOnPage = await page.$$(hotelsCardsObj.mainDivsSel);
+
+    for (let [i, hotelCard] of allHotelCardsOnPage.entries()) {
+        // statement
+        console.log('for: ' + i + ' --------------------------');
+        let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => {
+            console.log(node.innerText);
+            return node.innerText;
+        });
+
+        let hotelAddress = await getAddressFromProfPage(page, hotelCard, hotelsCardsObj);
+        allHotelsInfos[hotelName] = hotelAddress;
+        console.log('allHotelsInfos[hotelName]:');
+        console.log(allHotelsInfos[hotelName]);
+        console.log('hotelAddress');
+        console.log(hotelAddress);
+    }
+
+    console.log(allHotelsInfos);
+    return allHotelsInfos;
+}
+
+async function getAddressFromProfPage(page, hotelCard, hotelsCardsObj) {
+    console.log('inProfpage:');
+    let currLink = await page.evaluate(() => window.location.href)
+    console.log(currLink === page.url());
+    let profPageLink = await hotelCard.$eval(hotelsCardsObj.profPagesLinkSel, node => {
+        console.log(node.href);
+        return node.href;
+    });
+    console.log('profPageLink:');
+    console.log(profPageLink);
+    await page.goto(profPageLink)
+    await page.waitForSelector(hotelsCardsObj.addressSel);
+
+    let hotelAddress = await page.$eval(hotelsCardsObj.addressSel, span => {
+    console.log(span.innerText);    
+    return span.innerText;
+    });
+
+    console.log('hotelAddress:');
+    console.log(hotelAddress);
+    await page.goto(currLink)
+    console.log('before wait:');
+    await page.waitForSelector(hotelsCardsObj.mainDivsSel);
+    console.log('after wait:');
+
+    return hotelAddress;
+}
+
+const hotelsCardsObj = {
+    mainDivsSel : '[data-hotelid]',
+    uniqueSel : 'data-hotelid',
+    namesSel : 'span.sr-hotel__name',
+    profPagesLinkSel : 'a.hotel_name_link.url',
+    addressSel :'span.hp_address_subtitle.js-hp_address_subtitle.jq_tooltip',
+};
+
+*/

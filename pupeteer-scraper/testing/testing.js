@@ -8,7 +8,7 @@ cahr : character
 */
 const puppeteer = require('puppeteer');
 const mainPageUrl = 'https://www.booking.com/';
-const gotoUrlB = 'https://www.booking.com/searchresults.html?label=gen173nr-1DCAEoggJCAlhYSDNYBGhpiAEBmAExwgEDeDExyAEM2AED6AEB-AECkgIBeagCAw&sid=6c4f44e4d74371e2d67d59a79a5137a2&checkin_month=11&checkin_monthday=5&checkin_year=2018&checkout_month=11&checkout_monthday=6&checkout_year=2018&class_interval=1&dest_id=607&dest_type=region&dtdisc=0&from_sf=1&group_adults=1&group_children=0&inac=0&index_postcard=0&label_click=undef&map=1&no_rooms=1&postcard=0&raw_dest_type=region&room1=A&sb_price_type=total&search_selected=1&src=index&src_elem=sb&ss=Tirol%2C%20Austria&ss_all=0&ss_raw=tir&ssb=empty&sshis=0&rows=15';
+const gotoUrlB = 'https://www.booking.com/searchresults.html?aid=304142&label=gen173nr-1DCAEoggJCAlhYSDNYBGhpiAEBmAExwgEDeDExyAEM2AED6AEB-AECkgIBeagCAw&sid=6c4f44e4d74371e2d67d59a79a5137a2&checkin_month=11&checkin_monthday=5&checkin_year=2018&checkout_month=11&checkout_monthday=6&checkout_year=2018&class_interval=1&dest_id=607&dest_type=region&dtdisc=0&from_sf=1&group_adults=1&group_children=0&inac=0&index_postcard=0&label_click=undef&lsf=ht_id%7C204%7C247&map=1&nflt=ht_id%3D204%3Bht_id%3D216%3B&no_rooms=1&percent_htype_hotel=1&postcard=0&raw_dest_type=region&room1=A&sb_price_type=total&search_selected=1&src=index&ss=Tirol%2C%20Austria&ss_all=0&ss_raw=tir&ssb=empty&sshis=0&rows=15&offset=15';
 const findDealsCont = '.xpi__content__container';
 const destInputSel = 'input#ss'; 
 const destRegion = 'Tirol, Austria';
@@ -43,11 +43,10 @@ let waitforSels = {
     mainPageSelToWait : '.xp__fieldset.accommodation',
     searchResPageSelToWait : '#close_map_lightbox',
 }
-
-const enterText = require('./moduls/utils.js').enterText;
-const clickBtn = require('./moduls/utils.js').clickBtn;
-const changeInnerText = require('./moduls/utils.js').changeInnerText;
-const getNextPageBtnObj = require('./moduls/utils.js').getNextPageBtnObj;
+const enterText = require('../moduls/utils.js').enterText;
+const clickBtn = require('../moduls/utils.js').clickBtn;
+const changeInnerText = require('../moduls/utils.js').changeInnerText;
+const getNextPageBtnObj = require('../moduls/utils.js').getNextPageBtnObj;
 
 // In pupeteer most methods are returning a promise
 // so we need to wait on anything
@@ -58,12 +57,15 @@ async function createScrapingLogic() {
         await page.once('load', () => console.log('Page loaded!' + searchBtnSel));
         await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
-        await page.goto(mainPageUrl);
-
-        await getToSearchResultspage(page);
-        await page.waitForSelector(closeMapLightboxSel);
+        await page.goto(gotoUrlB);
+        console.log('1:')
+        extractHotelCards(page, hotelsCardsObj)
+        //await getToSearchResultspage(page);
+        //await page.waitForSelector(closeMapLightboxSel);
+      
         
-        await clickBtn(page, closeMapLightboxSel);
+        
+       /* await clickBtn(page, closeMapLightboxSel);
 
         await clickBtn(page, radioBtns.hotels);
         await page.waitForSelector(`${radioBtns.hotels}${waitforSels.activeFilteClass}`);
@@ -72,7 +74,7 @@ async function createScrapingLogic() {
         await page.waitForSelector(`${radioBtns.guesthouse}${waitforSels.activeFilteClass}`);
        
         await page.waitForSelector(pagiBtnsObj.allsSel);
-        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1')
+        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1')*/
     } catch(e) {
         console.log('our error: ' + e);
     }
@@ -95,7 +97,7 @@ async function getToSearchResultspage(page){
 
 async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagiBtnInnerText) {
     await page.evaluate(function(pagiBtnsObj, hotelsCardsObj){
-     //  extractHotelCards(hotelsCardsObj);
+        extractHotelCards(page, hotelsCardsObj);
     }, ...[pagiBtnsObj, hotelsCardsObj])
 
     let nextPagiBtnObj =await getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj);
@@ -111,21 +113,52 @@ async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagi
     }     
 }
 
-createScrapingLogic();
+/*
+const hotelsCardsObj = {
+    mainDivsSel : '[data-hotelid]',
+    uniqueSel : 'data-hotelid',
+    namesSel : 'span.sr-hotel__name',
+    profPagesLinkSel : 'a.hotel_name_link.url'
+};
+*/
+/*
+    extract hotel carads
+        all cards
+        hotelsInfosObj
+        loop through al card
+            extract one card
+                get name
+                go to sub page
+                get adress
+                go back to prec page
+                return name and adress
+            push name and adreess into hotelinfos obj
+        retunr hotelinfos obj
 
-async function extractHotelCards(hotelsCardsObj){
-    let cardsSel = hotelsCardsObj.mainDivsSel;
-    let hotelCards = document.querySelectorAll(cardsSel);
-    let namesSel = hotelsCardsObj.namesSel;
-    let uniqueSel = hotelsCardsObj.uniqueSel;
-    let profPagesLinkSel = hotelsCardsObj.profPagesLinkSel;
-    let currLink = window.location.href;
+*/          
 
-    for (let [i, card] of hotelCards.entries()) {
-        let thisHotelsId = card.getAttribute(uniqueSel);
-        let hotelName = document.querySelector(`[${uniqueSel}=\'${thisHotelsId}\'] ${namesSel}`).innerText;
-        let profPagesLink = document.querySelector(`[${uniqueSel}=\'${thisHotelsId}\'] ${profPagesLinkSel}`).getAttribute('href');
-        profPagesLink = 'https://www.booking.com' + profPagesLink;
-        //var address = await extractProfPage();
+async function extractHotelCards(page, hotelsCardsObj){
+    console.log('hotelsCardsObj:');
+    console.log(hotelsCardsObj);
+    let hotelinfos = {};
+    let allHotelCardOnPage = await page.$$(hotelsCardsObj.mainDivsSel);
+
+    for (let [i, hotelCard] of allHotelCardOnPage.entries()) {
+        // statement
+        let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => {
+            console.log(node.innerText);
+            return node.innerText;
+        });
+
+        console.log(hotelName);
+        hotelinfos['name-' + i] = hotelName;
+        //let hotelAddress = await getAddressFromProfPage();
     }
+    console.log(hotelinfos);
+    
 }
+function extractHotelCard() {
+    let 
+}
+
+createScrapingLogic();

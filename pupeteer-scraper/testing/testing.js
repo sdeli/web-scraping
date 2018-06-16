@@ -32,7 +32,8 @@ const hotelsCardsObj = {
     mainDivsSel : '[data-hotelid]',
     uniqueSel : 'data-hotelid',
     namesSel : 'span.sr-hotel__name',
-    profPagesLinkSel : 'a.hotel_name_link.url'
+    profPagesLinkSel : 'a.hotel_name_link.url',
+    addressSel :'span.hp_address_subtitle.js-hp_address_subtitle.jq_tooltip'
 };
 let radioBtns = {
     guesthouse : '[data-id="ht_id-216"]',
@@ -52,9 +53,8 @@ const getNextPageBtnObj = require('../moduls/utils.js').getNextPageBtnObj;
 // so we need to wait on anything
 async function createScrapingLogic() {
     try {
-        const browser = await puppeteer.launch({headless: false});
+        const browser = await puppeteer.launch({headless: true});
         const page = await browser.newPage();
-        await page.once('load', () => console.log('Page loaded!' + searchBtnSel));
         await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
         await page.goto(gotoUrlB);
@@ -145,20 +145,55 @@ async function extractHotelCards(page, hotelsCardsObj){
 
     for (let [i, hotelCard] of allHotelCardOnPage.entries()) {
         // statement
-        let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => {
-            console.log(node.innerText);
-            return node.innerText;
-        });
+        try {
+            console.log('for i: ' + i + '--------------------------');
+            let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => {
+                console.log(node.innerText);
+                return node.innerText;
+            });
 
-        console.log(hotelName);
-        hotelinfos['name-' + i] = hotelName;
-        //let hotelAddress = await getAddressFromProfPage();
+            let hotelAddress = await getAddressFromProfPage(hotelCard, hotelsCardsObj);
+            hotelinfos[hotelName] = hotelAddress;
+            console.log(hotelName);
+            console.log(hotelinfos[hotelName]);
+            //let hotelAddress = await getAddressFromProfPage();
+        } catch(e) {
+            // statements
+            console.log('for: ' + e);
+        }
     }
+
     console.log(hotelinfos);
     
 }
-function extractHotelCard() {
-    let 
+
+async function getAddressFromProfPage(hotelCard, hotelsCardsObj) {
+    try {
+        var browser = await puppeteer.launch({headless: true});
+        var page = await browser.newPage();
+        await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
+        await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
+
+        let profPageLink = await hotelCard.$eval(hotelsCardsObj.profPagesLinkSel, node => {
+            console.log(node.href);
+            return node.href;
+        });
+
+        await page.goto(profPageLink)
+        await page.waitForSelector(hotelsCardsObj.addressSel);
+
+        let hotelAddress = await page.$eval(hotelsCardsObj.addressSel, span => {
+        console.log(span.innerText);    
+        return span.innerText;
+        });
+
+        browser.close()
+
+        return hotelAddress;
+    } catch(e) {
+        // statements
+        console.log('getadrr ' + e);
+    }
 }
 
 createScrapingLogic();

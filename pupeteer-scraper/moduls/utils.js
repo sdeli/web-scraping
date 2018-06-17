@@ -1,3 +1,15 @@
+const fs = require('fs');
+const puppeteer = require('puppeteer');
+
+function writeIntoHotelinfosJson(allHotelsInfosObj){
+    let allHotelsInfosJSON = JSON.stringify(allHotelsInfosObj);
+    
+    fs.writeFile('../model/hotel-infos.json', allHotelsInfosJSON, (err) => {  
+        if (err) throw err;
+        console.log('allHotelsInfosObj saved!');
+    });
+}
+
 async function enterText(page, elemSelector, text) {
     // Sends a keydown, keypress/input, and keyup event for each character in the text.
     await page.type(elemSelector, text)
@@ -68,11 +80,62 @@ async function getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj) {
     return nextPagiBtnObj;
 }
 
+async function extractHotelCards(page, hotelsCardsObj){
+    let hotelinfos = {};
+    let allHotelCardOnPage = await page.$$(hotelsCardsObj.mainDivsSel);
+
+    for (let [i, hotelCard] of allHotelCardOnPage.entries()) {
+        // statement
+        try {
+            console.log('for i: ' + i + '--------------------------');
+            let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => node.innerText);
+
+            let hotelAddress = await getAddressFromProfPage(hotelCard, hotelsCardsObj);
+            hotelinfos[hotelName] = hotelAddress;
+            console.log(hotelName);
+            console.log(hotelinfos[hotelName]);
+            //let hotelAddress = await getAddressFromProfPage();
+        } catch(e) {
+            // statements
+            console.log('for: ' + e);
+        }
+    }
+
+    console.log(hotelinfos);
+    return hotelinfos;
+    
+}
+
+async function getAddressFromProfPage(hotelCard, hotelsCardsObj) {
+    try {
+        var browser = await puppeteer.launch({headless: true});
+        var page = await browser.newPage();
+        await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
+        await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
+
+        let profPageLink = await hotelCard.$eval(hotelsCardsObj.profPagesLinkSel, node => node.href);
+
+        await page.goto(profPageLink)
+        await page.waitForSelector(hotelsCardsObj.addressSel);
+
+        let hotelAddress = await page.$eval(hotelsCardsObj.addressSel, span => span.innerText);
+
+        browser.close()
+
+        return hotelAddress;
+    } catch(e) {
+        // statements
+        console.log('getadrr ' + e);
+    }
+}
+
 module.exports.enterText = enterText;
 module.exports.changeInnerText = changeInnerText;
 module.exports.changeInputsValue = changeInputsValue;
 module.exports.clickBtn = clickBtn;
 module.exports.getNextPageBtnObj = getNextPageBtnObj;
+module.exports.extractHotelCards = extractHotelCards;
+module.exports.writeIntoHotelinfosJson = writeIntoHotelinfosJson;
 
 /*
 async function extractHotelCards(page, hotelsCardsObj){

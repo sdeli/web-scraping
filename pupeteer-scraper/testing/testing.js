@@ -44,10 +44,14 @@ let waitforSels = {
     mainPageSelToWait : '.xp__fieldset.accommodation',
     searchResPageSelToWait : '#close_map_lightbox',
 }
+
 const enterText = require('../moduls/utils.js').enterText;
 const clickBtn = require('../moduls/utils.js').clickBtn;
 const changeInnerText = require('../moduls/utils.js').changeInnerText;
 const getNextPageBtnObj = require('../moduls/utils.js').getNextPageBtnObj;
+const writeIntoHotelinfosJson = require('../moduls/utils.js').writeIntoHotelinfosJson;
+const extractHotelCards = require('../moduls/utils.js').extractHotelCards;
+let allHotelsInfosObj = {};
 
 // In pupeteer most methods are returning a promise
 // so we need to wait on anything
@@ -59,13 +63,10 @@ async function createScrapingLogic() {
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
         await page.goto(gotoUrlB);
         console.log('1:')
-        extractHotelCards(page, hotelsCardsObj)
-        //await getToSearchResultspage(page);
-        //await page.waitForSelector(closeMapLightboxSel);
+        await getToSearchResultspage(page);
+        await page.waitForSelector(closeMapLightboxSel);
       
-        
-        
-       /* await clickBtn(page, closeMapLightboxSel);
+        await clickBtn(page, closeMapLightboxSel);
 
         await clickBtn(page, radioBtns.hotels);
         await page.waitForSelector(`${radioBtns.hotels}${waitforSels.activeFilteClass}`);
@@ -74,7 +75,7 @@ async function createScrapingLogic() {
         await page.waitForSelector(`${radioBtns.guesthouse}${waitforSels.activeFilteClass}`);
        
         await page.waitForSelector(pagiBtnsObj.allsSel);
-        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1')*/
+        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1');
     } catch(e) {
         console.log('our error: ' + e);
     }
@@ -96,11 +97,12 @@ async function getToSearchResultspage(page){
 }
 
 async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagiBtnInnerText) {
-    await page.evaluate(function(pagiBtnsObj, hotelsCardsObj){
-        extractHotelCards(page, hotelsCardsObj);
-    }, ...[pagiBtnsObj, hotelsCardsObj])
+   
+    let hotelInfosFromPageObj = await extractHotelCards(page, hotelsCardsObj);
+    allHotelsInfosObj = Object.assign(allHotelsInfosObj, hotelInfosFromPageObj);
+    writeIntoHotelinfosJson(allHotelsInfosObj);
 
-    let nextPagiBtnObj =await getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj);
+    let nextPagiBtnObj = await getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj);
 
     if (nextPagiBtnObj) {
         await page.goto(nextPagiBtnObj.nextHref)
@@ -109,91 +111,8 @@ async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagi
         extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, nextPagiBtnObj.innerText);
         
     } else {
-        return 'all pages extracted'
+        return 'all pages extracted';
     }     
-}
-
-/*
-const hotelsCardsObj = {
-    mainDivsSel : '[data-hotelid]',
-    uniqueSel : 'data-hotelid',
-    namesSel : 'span.sr-hotel__name',
-    profPagesLinkSel : 'a.hotel_name_link.url'
-};
-*/
-/*
-    extract hotel carads
-        all cards
-        hotelsInfosObj
-        loop through al card
-            extract one card
-                get name
-                go to sub page
-                get adress
-                go back to prec page
-                return name and adress
-            push name and adreess into hotelinfos obj
-        retunr hotelinfos obj
-
-*/          
-
-async function extractHotelCards(page, hotelsCardsObj){
-    console.log('hotelsCardsObj:');
-    console.log(hotelsCardsObj);
-    let hotelinfos = {};
-    let allHotelCardOnPage = await page.$$(hotelsCardsObj.mainDivsSel);
-
-    for (let [i, hotelCard] of allHotelCardOnPage.entries()) {
-        // statement
-        try {
-            console.log('for i: ' + i + '--------------------------');
-            let hotelName = await hotelCard.$eval(hotelsCardsObj.namesSel, node => {
-                console.log(node.innerText);
-                return node.innerText;
-            });
-
-            let hotelAddress = await getAddressFromProfPage(hotelCard, hotelsCardsObj);
-            hotelinfos[hotelName] = hotelAddress;
-            console.log(hotelName);
-            console.log(hotelinfos[hotelName]);
-            //let hotelAddress = await getAddressFromProfPage();
-        } catch(e) {
-            // statements
-            console.log('for: ' + e);
-        }
-    }
-
-    console.log(hotelinfos);
-    
-}
-
-async function getAddressFromProfPage(hotelCard, hotelsCardsObj) {
-    try {
-        var browser = await puppeteer.launch({headless: true});
-        var page = await browser.newPage();
-        await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
-        await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
-
-        let profPageLink = await hotelCard.$eval(hotelsCardsObj.profPagesLinkSel, node => {
-            console.log(node.href);
-            return node.href;
-        });
-
-        await page.goto(profPageLink)
-        await page.waitForSelector(hotelsCardsObj.addressSel);
-
-        let hotelAddress = await page.$eval(hotelsCardsObj.addressSel, span => {
-        console.log(span.innerText);    
-        return span.innerText;
-        });
-
-        browser.close()
-
-        return hotelAddress;
-    } catch(e) {
-        // statements
-        console.log('getadrr ' + e);
-    }
-}
+}       
 
 createScrapingLogic();

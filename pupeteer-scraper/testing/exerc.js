@@ -1,22 +1,12 @@
-var majom1 = 'feri1';
-var majom2 = 'feri2';
-var majom3 = 'feri3';
-var majom4 = 'feri';
-var majom5 = 'feri';
-var majom6 = 'feri';
-var majom7 = 'feri';
-var mami = require('./testing.js').mami;
-var idiot = this;
-mami.call(...globalsForMami());
+const url = require('url');
 
-console.log(...globalsForMami());
+let gugli = 'https://www.google.com/search?ei=EOwnW5zsD-HPgAbn0L7wBg&q=majom+itttas&oq=majom+itttas&gs_l=psy-ab.3..33i160k1.16492700.16494169.0.16495346.7.7.0.0.0.0.161.260.1j1.2.0....0...1c.1.64.psy-ab..5.2.259...0j0i10k1.0.wg3oPEkqetE'
 
-function globalsForMami(){
-    return [majom2, majom3, majom4, majom5, majom6, majom7];
-}
+let parsedUrl = url.parse(gugli, true);
+console.log('parsedUrl:');
+console.log(parsedUrl);
+// Get the path
 
-function loop(paramObj, index){
-    let index = index || 0;
-    let paramObjKeys = Object.keys(paramObj);
-    let paramObjValues = Object.values(paramObj);
-}
+let queryStringObj = parsedUrl.query;
+console.log('queryStringObj:');
+console.log(queryStringObj);

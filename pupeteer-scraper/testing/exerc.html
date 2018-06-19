@@ -13,33 +13,33 @@
 <div></div>
 <div></div>
 <script>
-    var pagiBtnsObj = {
-        li : '.sr_pagination_item',
-        allsSel : '.sr_pagination_item a',
-        activesSel : `.current`
-    };
+    let bannedDomainsArr = [
+        '.booked.',
+        'solden-hotels',
+        '.findhotelswebsite.'
+    ]
+    
+function checkIfCompanyLink(link, hotelName) {
+    let domainName = url.parse(link, true).hostname;
+    let queryWordsArr = hotelName.split(" ");
+    isBannedDomain = checkForBannedDomains(domainName);
+    console.log('domainName:');
+    console.log(domainName);
+    console.log('isBannedDomain:');
+    console.log(isBannedDomain);
+    if (!isBannedDomain) return false;
 
-    var x = call();
-    console.log(x);
+    return queryWordsArr.every((word) => domainName.indexOf(word) > -1);
+}
 
-    function call(){
-        var allPagiBtns = document.querySelectorAll(pagiBtnsObj.allsSel);
-        console.log('allPagiBtns:');
-        console.log(allPagiBtns);
-        console.log('pagiBtnsObj:');
-        console.log(pagiBtnsObj);
-        pagiBtnsObj.lastItem = allPagiBtns[allPagiBtns.length - 1];
-
-        for (var [i, btn] of allPagiBtns.entries()) {
-            console.log(allPagiBtns.legth);
-            if  (i === allPagiBtns.legth - 1) return false;
-
-            if (btn.innerText === currPagiBtnInnerText) {
-                console.log(`${pagiBtnsObj.li}:nth-child(${i + 2} a`);
-                return `${pagiBtnsObj.li}:nth-child(${i + 2} a`;
-            }
-        }
+function checkForBannedDomains(domainName){
+    return bannedDomainsArr.every(bannedDomain => domainName.indexOf(bannedDomain) > -1);
+}    
+   function checkForBannedDomains(domainName){
+        return bannedDomainsArr.every(bannedDomain => domainName.indexOf(bannedDomain[0]) > -1);
     }
+
+    console.log(checkForBannedDomains('http://aparthotel-garni-am-johannesbrunnen-fissnet.booked./'));
 </script>
 </body>
 </html>

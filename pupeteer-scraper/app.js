@@ -45,19 +45,21 @@ let waitforSels = {
     searchResPageSelToWait : '#close_map_lightbox',
 }
 
-const enterText = require('./moduls/utils.js').enterText;
-const clickBtn = require('./moduls/utils.js').clickBtn;
-const changeInnerText = require('./moduls/utils.js').changeInnerText;
-const getNextPageBtnObj = require('./moduls/utils.js').getNextPageBtnObj;
-const writeIntoHotelinfosJson = require('./moduls/utils.js').writeIntoHotelinfosJson;
-const extractHotelCards = require('./moduls/utils.js').extractHotelCards;
+const enterText = require('./moduls/helpers.js').enterText;
+const clickBtn = require('./moduls/helpers.js').clickBtn;
+const changeInnerText = require('./moduls/helpers.js').changeInnerText;
+const getNextPageBtnObj = require('./moduls/helpers.js').getNextPageBtnObj;
+const writeIntoHotelinfosJson = require('./moduls/helpers.js').writeIntoHotelinfosJson;
+const writeObjIntoJsonFile = require('./moduls/helpers.js').writeObjIntoJsonFile;
+const extractHotelCards = require('./moduls/helpers.js').extractHotelCards;
+const appendObjToJsonFile = require('./moduls/helpers.js').appendObjToJsonFile;
 let allHotelsInfosObj = {};
 
 // In pupeteer most methods are returning a promise
 // so we need to wait on anything
 async function createScrapingLogic() {
     try {
-        const browser = await puppeteer.launch({headless: true});
+        const browser = await puppeteer.launch({headless: false});
         const page = await browser.newPage();
         await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
@@ -75,7 +77,9 @@ async function createScrapingLogic() {
         await page.waitForSelector(`${radioBtns.guesthouse}${waitforSels.activeFilteClass}`);
        
         await page.waitForSelector(pagiBtnsObj.allsSel);
-        await extractPaginatedPages(page, '1');
+        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1');
+        
+        writeObjIntoJsonFile(allHotelsInfosObj, './model/hotel-infos-security.json');
         
     } catch(e) {
         console.log('our error: ' + e);
@@ -87,7 +91,6 @@ async function getToSearchResultspage(page){
     console.log(enterDestination);
 
     await page.waitForSelector(liToClickInDropDown);
-
     await clickBtn(page, liToClickInDropDown);
 
     let enterCheckInDate = await changeInnerText(page, checkInMonthSpanSel, checkInDate);    
@@ -100,8 +103,8 @@ async function getToSearchResultspage(page){
 async function extractPaginatedPages(page, currPagiBtnInnerText) {
    
     let hotelInfosFromPageObj = await extractHotelCards(page, hotelsCardsObj);
-    allHotelsInfosObj = Object.assign(allHotelsInfosObj, hotelInfosFromPageObj);
-    writeIntoHotelinfosJson(allHotelsInfosObj);
+   // allHotelsInfosObj = Object.assign(allHotelsInfosObj, hotelInfosFromPageObj);
+    //appendObjToJsonFile(allHotelsInfosObj, './model/hotel-infos.json')
 
     let nextPagiBtnObj = await getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj);
 

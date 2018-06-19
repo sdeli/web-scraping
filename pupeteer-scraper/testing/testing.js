@@ -8,7 +8,7 @@ cahr : character
 */
 const puppeteer = require('puppeteer');
 const mainPageUrl = 'https://www.booking.com/';
-const gotoUrlB = 'https://www.booking.com/searchresults.html?aid=304142&label=gen173nr-1DCAEoggJCAlhYSDNYBGhpiAEBmAExwgEDeDExyAEM2AED6AEB-AECkgIBeagCAw&sid=6c4f44e4d74371e2d67d59a79a5137a2&checkin_month=11&checkin_monthday=5&checkin_year=2018&checkout_month=11&checkout_monthday=6&checkout_year=2018&class_interval=1&dest_id=607&dest_type=region&dtdisc=0&from_sf=1&group_adults=1&group_children=0&inac=0&index_postcard=0&label_click=undef&lsf=ht_id%7C204%7C247&map=1&nflt=ht_id%3D204%3Bht_id%3D216%3B&no_rooms=1&percent_htype_hotel=1&postcard=0&raw_dest_type=region&room1=A&sb_price_type=total&search_selected=1&src=index&ss=Tirol%2C%20Austria&ss_all=0&ss_raw=tir&ssb=empty&sshis=0&rows=15&offset=15';
+const gotoUrlB = 'https://www.booking.com/searchresults.html?aid=304142&label=gen173rf-1FCAEoggJCAlhYSDNYA2hpiAEBmAExwgEDeDExyAEM2AEB6AEB-AECkgIBeaICFHdvcmtpbmdhdGJvb2tpbmcuY29tqAID&sid=6bc2acc518cb0d1138f115ed2224c72b&class_interval=1&dest_id=607&dest_type=region&from_sf=1&group_adults=2&group_children=0&label_click=undef&lsf=ht_id%7C204%7C1535&map=1&nflt=ht_id%3D204%3Bht_id%3D216%3B&no_rooms=1&percent_htype_hotel=1&raw_dest_type=region&room1=A%2CA&sb_price_type=total&search_selected=1&src=index&ss=Tirol%2C%20Austria&ss_raw=Tirol%2C%20Austria&ssb=empty&rows=15&offset=510';
 const findDealsCont = '.xpi__content__container';
 const destInputSel = 'input#ss'; 
 const destRegion = 'Tirol, Austria';
@@ -45,12 +45,15 @@ let waitforSels = {
     searchResPageSelToWait : '#close_map_lightbox',
 }
 
-const enterText = require('../moduls/utils.js').enterText;
-const clickBtn = require('../moduls/utils.js').clickBtn;
-const changeInnerText = require('../moduls/utils.js').changeInnerText;
-const getNextPageBtnObj = require('../moduls/utils.js').getNextPageBtnObj;
-const writeIntoHotelinfosJson = require('../moduls/utils.js').writeIntoHotelinfosJson;
-const extractHotelCards = require('../moduls/utils.js').extractHotelCards;
+const enterText = require('../moduls/helpers.js').enterText;
+const clickBtn = require('../moduls/helpers.js').clickBtn;
+const changeInnerText = require('../moduls/helpers.js').changeInnerText;
+const getNextPageBtnObj = require('../moduls/helpers.js').getNextPageBtnObj;
+const writeObjIntoJsonFile = require('../moduls/helpers.js').writeObjIntoJsonFile;
+const extractHotelCards = require('../moduls/helpers.js').extractHotelCards;
+const appendObjToJsonFile = require('../moduls/helpers.js').appendObjToJsonFile;
+//const scrapeGoogle = require('../moduls/google-search.js');
+
 let allHotelsInfosObj = {};
 
 // In pupeteer most methods are returning a promise
@@ -61,8 +64,8 @@ async function createScrapingLogic() {
         const page = await browser.newPage();
         await page.setExtraHTTPHeaders({Referer: 'https://workingatbooking.com/vacancies/'})
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36');
-        await page.goto(gotoUrlB);
-        console.log('1:')
+        await page.goto(mainPageUrl);
+
         await getToSearchResultspage(page);
         await page.waitForSelector(closeMapLightboxSel);
       
@@ -75,7 +78,12 @@ async function createScrapingLogic() {
         await page.waitForSelector(`${radioBtns.guesthouse}${waitforSels.activeFilteClass}`);
        
         await page.waitForSelector(pagiBtnsObj.allsSel);
-        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '1');
+        await extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, '35');
+        
+        writeObjIntoJsonFile(allHotelsInfosObj, '../model/plain-hotel-infos.json');
+
+        //await scrapeGoogle(allHotelsInfosObj, 100)
+        //writeObjIntoJsonFile(allHotelsInfosObj, '../model/hotel-infos.json');
     } catch(e) {
         console.log('our error: ' + e);
     }
@@ -100,11 +108,14 @@ async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagi
    
     let hotelInfosFromPageObj = await extractHotelCards(page, hotelsCardsObj);
     allHotelsInfosObj = Object.assign(allHotelsInfosObj, hotelInfosFromPageObj);
-    writeIntoHotelinfosJson(allHotelsInfosObj);
+    appendObjToJsonFile(allHotelsInfosObj, '../model/hotel-infos.json') 
 
     let nextPagiBtnObj = await getNextPageBtnObj(page, currPagiBtnInnerText, pagiBtnsObj);
+    console.log('nextPagiBtnObj:');
+    console.log(Boolean(nextPagiBtnObj));
 
     if (nextPagiBtnObj) {
+        console.log('in');
         await page.goto(nextPagiBtnObj.nextHref)
         await page.waitForSelector(`${pagiBtnsObj.li}${pagiBtnsObj.activesSel}`);
 
@@ -113,6 +124,6 @@ async function extractPaginatedPages(page, pagiBtnsObj, hotelsCardsObj, currPagi
     } else {
         return 'all pages extracted';
     }     
-}       
+}    
 
 createScrapingLogic();
